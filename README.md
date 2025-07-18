@@ -1,6 +1,5 @@
-<<<<<<< HEAD
-# Aplication-Automator
-=======
+
+
 # Job Application Automator
 
 Automate the process of tailoring your CV to specific job descriptions! This tool lets you select your CV, provide a job description (by file or by pasting text), and generates a customized summary and cover letter, which you can edit, preview, and save in your preferred format.
