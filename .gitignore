@@ -12,7 +12,7 @@ Thumbs.db
 # Output files (generated CVs, cover letters, etc.)
 *.pdf
 *.docx
-*.txt
+txt
 
 # Sample outputs
 samples/updated_*
