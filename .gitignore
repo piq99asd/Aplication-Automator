@@ -1,0 +1,27 @@
+# Byte-compiled / cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Output files (generated CVs, cover letters, etc.)
+*.pdf
+*.docx
+*.txt
+
+# Sample outputs
+samples/updated_*
+samples/~$*
+
+# Fonts (if not needed in repo)
+dejavu-fonts-ttf-2.37/
+DejaVuSans.ttf
+
+# VSCode and IDE settings
+.vscode/
+.idea/ 
