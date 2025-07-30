@@ -1,6 +1,15 @@
 import os
 import fitz
 import re
+import openai
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable not set.")
+openai.api_key = api_key
 
 def extract_text_from_jd(file_path):
     ext = os.path.splitext(file_path)[1].lower()
@@ -210,6 +219,30 @@ def extract_company_from_jd(jd_text):
                 return candidate
     
     return "the company"
+    
+def extract_keywords_with_ai(jd_text):
+    prompt = f"""
+    You are an assistant that extracts keywords from a job description.
+    Extract the keywords (technical skills, methodologies, tools, languages,etc.) from the following job description:
+    {jd_text}
+    Return the keywords in a list format.
+    Example output: Python, Docker, Jira, Selenium, Playwright, etc.
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=200
+    )
+
+    raw_response = response.choices[0].message["content"].strip()
+    keywords=[]
+    for keyword in raw_response.split(","):
+        cleaned=keyword.strip().lower()
+        cleaned=re.sub(r"[^a-z0-9\s]", "", cleaned)
+        if cleaned and len(cleaned)>1:
+            keywords.append(cleaned)
+    return sorted(list(set(keywords)))
 
 def extract_keywords_from_jd(jd_text):
     jd_text = jd_text.lower()

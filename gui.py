@@ -45,7 +45,12 @@ class JobAppAutomatorGUI:
         self.prompt_custom = tk.StringVar(value="")
         self.pasted_jd_text = None
         self.paste_jd_label = None
+        self.advanced_mode_toggled = tk.BooleanVar()
+        
+
         self.create_widgets()
+    def toggle_advanced_mode(self):
+        print(f"Advanced mode is toggled: {self.advanced_mode_toggled.get()}")
 
     def create_widgets(self):
         tk.Label(self.root, text="CV File (.docx or .pdf):").grid(row=0, column=0, sticky="e")
@@ -61,6 +66,11 @@ class JobAppAutomatorGUI:
 
         self.save_as_pdf_checkbox = tk.Checkbutton(self.root, text="Save as PDF (for .docx CV)", variable=self.save_as_pdf_var, state=tk.DISABLED)
         self.save_as_pdf_checkbox.grid(row=2, column=0, columnspan=3, pady=2)
+
+        
+        self.advanced_mode_checkbox = tk.Checkbutton(self.root, text="Advanced Mode", variable=self.advanced_mode_toggled, command=self.toggle_advanced_mode)
+        self.advanced_mode_checkbox.grid(row=2, column=3, padx=5)
+
 
         self.generate_btn = tk.Button(self.root, text="Generate Tailored Summary", command=self.run_automation)
         self.generate_btn.grid(row=3, column=0, columnspan=3, pady=10)
@@ -177,12 +187,19 @@ class JobAppAutomatorGUI:
             if self.pasted_jd_text:
                 jd_text = self.pasted_jd_text
                 jd_keywords = core.parse_jd("dummy.txt")[1] if False else core.parse_jd
-                from jd_parser import extract_keywords_from_jd, extract_job_title_from_jd, extract_company_from_jd
-                jd_keywords = extract_keywords_from_jd(jd_text)
+                from jd_parser import extract_keywords_from_jd, extract_keywords_with_ai, extract_job_title_from_jd, extract_company_from_jd
+                if self.advanced_mode_toggled.get():
+                    jd_keywords = extract_keywords_with_ai(jd_text)
+                else:
+                    jd_keywords = extract_keywords_from_jd(jd_text)
                 job_title = extract_job_title_from_jd(jd_text)
                 company_name = extract_company_from_jd(jd_text)
             else:
                 jd_text, jd_keywords, job_title, company_name = core.parse_jd(self.jd_file)
+                if self.advanced_mode_toggled.get():
+                    jd_keywords = extract_keywords_with_ai(jd_text)
+                else:
+                    jd_keywords = extract_keywords_from_jd(jd_text)
             matched, missing = core.match_cv_to_jd(cv_text, jd_keywords)
             self.status.set("Generating tailored summary...")
             self.root.update_idletasks()
