@@ -1,4 +1,5 @@
 from docx import Document
+from docx.shared import Pt
 import re
 
 def replace_about_me(docx_path, new_summary, output_path="updated_cv.docx"):
@@ -62,7 +63,12 @@ def replace_summary_section_docx(docx_path, new_summary, output_path="updated_cv
             break
     
     if summary_start is not None and summary_start + 1 < len(doc.paragraphs):
-        doc.paragraphs[summary_start + 1].text = new_summary
+        # Clear existing content and set new text with Times New Roman 12
+        para = doc.paragraphs[summary_start + 1]
+        para.clear()
+        run = para.add_run(new_summary)
+        run.font.name = 'Times New Roman'
+        run.font.size = Pt(12)
         print(f"✅ Replaced summary at paragraph {summary_start + 1}")
     else:
         new_doc = Document()
@@ -70,7 +76,10 @@ def replace_summary_section_docx(docx_path, new_summary, output_path="updated_cv
         header_para = new_doc.add_paragraph("Professional Summary")
         header_para.style = 'Heading 2'
         
-        summary_para = new_doc.add_paragraph(new_summary)
+        summary_para = new_doc.add_paragraph()
+        run = summary_para.add_run(new_summary)
+        run.font.name = 'Times New Roman'
+        run.font.size = Pt(12)
         
         for paragraph in doc.paragraphs:
             new_doc.add_paragraph(paragraph.text)
