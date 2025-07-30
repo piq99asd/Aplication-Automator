@@ -1,6 +1,7 @@
 import openai
 import os
 from dotenv import load_dotenv
+from jd_parser import extract_job_title_from_jd
 
 load_dotenv()
 
@@ -10,7 +11,9 @@ if not api_key:
 openai.api_key = api_key
 
 
-def generate_summary(matched, missing, job_title="Junior QA Automation Tester", tone=None, custom_instructions=None):
+def generate_summary(matched, missing, jd_text, tone=None, custom_instructions=None):
+    job_title = extract_job_title_from_jd(jd_text)
+    # Build AI prompt with specific instructions to only mention actual skills
     prompt = f"""
 You are an assistant that writes tailored CV summaries for job applications.
 
@@ -31,7 +34,7 @@ Optionally, you may mention the candidate's eagerness to develop in the missing 
         prompt += f"\n\nAdditional instructions: {custom_instructions.strip()}"
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",  # or "gpt-3.5-turbo"
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=200
@@ -67,7 +70,7 @@ The letter should:
         prompt += f"\n\nAdditional instructions: {custom_instructions.strip()}"
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",  # or "gpt-3.5-turbo"
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=400

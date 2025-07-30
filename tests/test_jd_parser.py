@@ -1,4 +1,3 @@
-# test_jd_parser.py
 from jd_parser import extract_text_from_jd, extract_keywords_from_jd
 
 jd_path = "samples/job_description.txt"

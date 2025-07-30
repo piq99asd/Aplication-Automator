@@ -9,18 +9,14 @@ from cv_editor import replace_summary_section_docx
 from summary_replacer import replace_summary_section
 import re
 
-# 1. Load and parse
 cv_text = extract_cv_text("samples/DINU_CV_ENGLISH.docx")
 jd_text = extract_text_from_jd("samples/job_description.txt")
 jd_keywords = extract_keywords_from_jd(jd_text)
 
-# 2. Match skills
 matched, missing = match_keywords(cv_text, jd_keywords)
 
-# 3. Generate tailored summary
-summary = generate_summary(matched, missing)
+summary = generate_summary(matched, missing, jd_text)
 
-# 4. Replace in CV and generate new DOCX
 cv_ext = os.path.splitext("samples/DINU_CV_ENGLISH.docx")[1].lower()
 if cv_ext == ".pdf":
     updated_cv_text = replace_summary_section(cv_text, summary)

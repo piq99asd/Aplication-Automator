@@ -1,6 +1,7 @@
 from cv_parser import extract_cv_text
 from jd_parser import extract_keywords_from_jd, extract_text_from_jd
 
+
 def match_keywords(cv_text, jd_keywords):
     matched = []
     missing = []

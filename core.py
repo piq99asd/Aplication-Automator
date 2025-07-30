@@ -20,8 +20,8 @@ def parse_jd(jd_path):
 def match_cv_to_jd(cv_text, jd_keywords):
     return match_keywords(cv_text, jd_keywords)
 
-def generate_cv_summary(matched, missing, job_title, tone="Default", custom_instructions=""):
-    return generate_summary(matched, missing, job_title=job_title, tone=tone, custom_instructions=custom_instructions)
+def generate_cv_summary(matched, missing, jd_text, tone="Default", custom_instructions=""):
+    return generate_summary(matched, missing, jd_text=jd_text, tone=tone, custom_instructions=custom_instructions)
 
 def generate_cv_cover_letter(matched, missing, job_title, candidate_name, company_name, tone="Default", custom_instructions=""):
     return generate_cover_letter(matched, missing, job_title, candidate_name, company_name, tone=tone, custom_instructions=custom_instructions)

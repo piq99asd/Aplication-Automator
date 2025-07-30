@@ -86,6 +86,15 @@ class JobAppAutomatorGUI:
         self.summary_text.grid(row=8, column=1, columnspan=2, pady=5)
         self.summary_text.config(state=tk.DISABLED)
 
+    def check_cover_letter_availability(self):
+        cv_available = bool(self.cv_path.get() or hasattr(self, 'cv_file'))
+        jd_available = bool(self.jd_path.get() or self.pasted_jd_text)
+        
+        if cv_available and jd_available:
+            self.cover_letter_btn.config(state=tk.NORMAL)
+        else:
+            self.cover_letter_btn.config(state=tk.DISABLED)
+
     def show_progress(self):
         self.progress.grid()
         self.progress.start(10)
@@ -106,11 +115,13 @@ class JobAppAutomatorGUI:
             else:
                 self.save_as_pdf_var.set(False)
                 self.save_as_pdf_checkbox.config(state=tk.DISABLED)
+            self.check_cover_letter_availability()
 
     def browse_jd(self):
         file_path = filedialog.askopenfilename(filetypes=[("Job Description Files", "*.txt *.pdf")])
         if file_path:
             self.jd_path.set(file_path)
+            self.check_cover_letter_availability()
 
     def open_paste_jd_dialog(self):
         dialog = tk.Toplevel(self.root)
@@ -128,9 +139,11 @@ class JobAppAutomatorGUI:
             else:
                 self.paste_jd_label.config(text="")
             dialog.destroy()
+            self.check_cover_letter_availability()
         tk.Button(dialog, text="Save", command=save_paste).pack(pady=10)
 
     def run_automation(self):
+        # Run in separate thread to prevent GUI freezing during API calls
         thread = threading.Thread(target=self._run_automation_thread)
         thread.start()
 
@@ -138,7 +151,6 @@ class JobAppAutomatorGUI:
         self.show_progress()
         self.cv_file = self.cv_path.get()
         self.jd_file = self.jd_path.get()
-        # Validation: check files exist and are correct type
         if not self.cv_file and not self.pasted_jd_text:
             self.hide_progress()
             messagebox.showerror("Error", "Please select a CV file and provide a job description (file or paste).")
@@ -164,8 +176,7 @@ class JobAppAutomatorGUI:
             cv_text = core.parse_cv(self.cv_file)
             if self.pasted_jd_text:
                 jd_text = self.pasted_jd_text
-                jd_keywords = core.parse_jd("dummy.txt")[1] if False else core.parse_jd  # placeholder, not used
-                # Use jd_parser directly for pasted text
+                jd_keywords = core.parse_jd("dummy.txt")[1] if False else core.parse_jd
                 from jd_parser import extract_keywords_from_jd, extract_job_title_from_jd, extract_company_from_jd
                 jd_keywords = extract_keywords_from_jd(jd_text)
                 job_title = extract_job_title_from_jd(jd_text)
@@ -175,7 +186,7 @@ class JobAppAutomatorGUI:
             matched, missing = core.match_cv_to_jd(cv_text, jd_keywords)
             self.status.set("Generating tailored summary...")
             self.root.update_idletasks()
-            summary = core.generate_cv_summary(matched, missing, job_title=job_title, custom_instructions=self.prompt_custom.get())
+            summary = core.generate_cv_summary(matched, missing, jd_text=jd_text, custom_instructions=self.prompt_custom.get())
             self.generated_summary = summary
             self.matched = matched
             self.missing = missing
@@ -183,7 +194,6 @@ class JobAppAutomatorGUI:
             self.company_name = company_name
             self.save_btn.config(state=tk.NORMAL)
             self.preview_btn.config(state=tk.NORMAL)
-            self.cover_letter_btn.config(state=tk.NORMAL)
             self.summary_text.config(state=tk.NORMAL)
             self.summary_text.delete(1.0, tk.END)
             self.summary_text.insert(tk.END, summary)
@@ -252,6 +262,7 @@ class JobAppAutomatorGUI:
         self.hide_progress()
 
     def save_updated_cv(self):
+        # Run in separate thread to prevent GUI freezing during file operations
         thread = threading.Thread(target=self._save_updated_cv_thread)
         thread.start()
 
@@ -282,11 +293,16 @@ class JobAppAutomatorGUI:
         text_widget.config(state=tk.DISABLED)
 
     def open_cover_letter_dialog(self):
-        # Auto-extract job title and company from JD or pasted text
         if self.pasted_jd_text:
             from jd_parser import extract_job_title_from_jd, extract_company_from_jd
             job_title = extract_job_title_from_jd(self.pasted_jd_text)
             company_name = extract_company_from_jd(self.pasted_jd_text)
+        elif self.jd_path.get():
+            try:
+                jd_text, jd_keywords, job_title, company_name = core.parse_jd(self.jd_path.get())
+            except:
+                job_title = getattr(self, 'job_title', "Job Title")
+                company_name = getattr(self, 'company_name', "the company")
         else:
             job_title = getattr(self, 'job_title', "Job Title")
             company_name = getattr(self, 'company_name', "the company")
@@ -319,37 +335,39 @@ class JobAppAutomatorGUI:
         tk.Button(dialog, text="Save", command=save_options).grid(row=1, column=0, columnspan=2, pady=10)
 
     def generate_and_show_cover_letter(self, candidate_name, job_title, company_name):
+        # Run in separate thread to prevent GUI freezing during API calls
         thread = threading.Thread(target=self._generate_and_show_cover_letter_thread, args=(candidate_name, job_title, company_name))
         thread.start()
 
     def _generate_and_show_cover_letter_thread(self, candidate_name, job_title, company_name):
         self.show_progress()
-        # Validate file types before generating cover letter
-        if not self.cv_file and not self.pasted_jd_text:
+        cv_file = getattr(self, 'cv_file', None) or self.cv_path.get()
+        
+        if not cv_file and not self.pasted_jd_text:
             self.hide_progress()
             messagebox.showerror("Error", "Please select a CV file and provide a job description (file or paste).")
             return
-        if not self.cv_file:
+        if not cv_file:
             self.hide_progress()
             messagebox.showerror("Error", "Please select a CV file.")
             return
-        if not self.pasted_jd_text and not self.jd_file:
+        if not self.pasted_jd_text and not self.jd_path.get():
             self.hide_progress()
             messagebox.showerror("Error", "Please provide a job description (file or paste).")
             return
-        cv_ext = os.path.splitext(self.cv_file)[1].lower()
+        cv_ext = os.path.splitext(cv_file)[1].lower()
         if cv_ext not in [".docx", ".pdf"]:
             self.hide_progress()
             messagebox.showerror("Invalid File Type", "CV file must be a .docx or .pdf file.")
             return
         try:
-            cv_text = core.parse_cv(self.cv_file)
+            cv_text = core.parse_cv(cv_file)
             if self.pasted_jd_text:
                 from jd_parser import extract_keywords_from_jd
                 jd_text = self.pasted_jd_text
                 jd_keywords = extract_keywords_from_jd(jd_text)
             else:
-                jd_text, jd_keywords, _, _ = core.parse_jd(self.jd_file)
+                jd_text, jd_keywords, _, _ = core.parse_jd(self.jd_path.get())
             matched, missing = core.match_cv_to_jd(cv_text, jd_keywords)
             self.status.set("Generating cover letter...")
             self.root.update_idletasks()
@@ -374,18 +392,34 @@ class JobAppAutomatorGUI:
         def save_cover_letter():
             content = text_widget.get(1.0, tk.END).strip()
             file_path = filedialog.asksaveasfilename(
-                defaultextension=".txt",
-                filetypes=[("Text File", "*.txt"), ("Word Document", "*.docx")],
+                defaultextension=".pdf",
+                filetypes=[("PDF Document", "*.pdf"), ("Word Document", "*.docx"), ("Text File", "*.txt")],
                 title="Save Cover Letter As...",
-                initialfile="cover_letter.txt"
+                initialfile="cover_letter.pdf"
             )
             if file_path:
-                if file_path.endswith(".docx"):
+                if file_path.endswith(".pdf"):
+                    try:
+                        self.generate_cover_letter_pdf(content, file_path)
+                        messagebox.showinfo("Success", f"Cover letter saved as '{file_path}'")
+                    except Exception as e:
+                        show_friendly_error(e)
+                elif file_path.endswith(".docx"):
                     try:
                         from docx import Document
+                        from docx.shared import Inches
+                        from docx.enum.text import WD_ALIGN_PARAGRAPH
+                        
                         doc = Document()
+                        style = doc.styles['Normal']
+                        style.font.name = 'Times New Roman'
+                        style.font.size = docx.shared.Pt(12)
+                        
                         for para in content.split("\n\n"):
-                            doc.add_paragraph(para)
+                            if para.strip():
+                                p = doc.add_paragraph(para.strip())
+                                p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                        
                         doc.save(file_path)
                         messagebox.showinfo("Success", f"Cover letter saved as '{file_path}'")
                     except Exception as e:
@@ -404,6 +438,56 @@ class JobAppAutomatorGUI:
         btn_frame.pack(pady=10)
         tk.Button(btn_frame, text="Save Cover Letter", command=save_cover_letter).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Preview Cover Letter", command=preview_cover_letter).pack(side=tk.LEFT, padx=5)
+
+    def generate_cover_letter_pdf(self, content, output_path):
+        try:
+            import fitz
+            
+            doc = fitz.open()
+            page = doc.new_page()
+            
+            font_size = 12
+            font_name = "Times-Roman"
+            line_height = font_size * 1.2
+            
+            margin_left = 72
+            margin_right = 72
+            margin_top = 72
+            margin_bottom = 72
+            
+            page_width = page.rect.width
+            page_height = page.rect.height
+            text_width = page_width - margin_left - margin_right
+            text_height = page_height - margin_top - margin_bottom
+            
+            x = margin_left
+            y = margin_top
+            
+            paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+            
+            for paragraph in paragraphs:
+                if y + line_height > page_height - margin_bottom:
+                    page = doc.new_page()
+                    y = margin_top
+                
+                page.insert_text(
+                    (x, y),
+                    paragraph,
+                    fontsize=font_size,
+                    fontname=font_name,
+                    color=(0, 0, 0)
+                )
+                
+                lines = paragraph.split('\n')
+                y += len(lines) * line_height + 10
+            
+            doc.save(output_path)
+            doc.close()
+            
+        except ImportError:
+            raise Exception("PyMuPDF (fitz) is required for PDF generation. Please install it with: pip install PyMuPDF")
+        except Exception as e:
+            raise Exception(f"Error generating PDF: {str(e)}")
 
 
 def main():
