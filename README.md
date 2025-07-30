@@ -69,21 +69,7 @@ Automate the process of tailoring your CV to specific job descriptions! This too
 
 *Screenshots of the GUI and features will be added here.*
 
----
 
-## Workflow
-
-```mermaid
-flowchart TD
-    A["User provides CV (docx/pdf) & Job Description (txt/pdf or pasted)"] --> B["Parse CV (cv_parser.py)"]
-    A --> C["Parse Job Description (jd_parser.py) or pasted text"]
-    B --> D["Match & Analyze (matcher.py)"]
-    C --> D
-    D --> E["Generate Tailored Summary (summary_generator.py)"]
-    E --> F["Update CV (cv_editor.py, summary_replacer.py)"]
-    F --> G["Rewrite/Export PDF (pdf_rewriter.py)"]
-    G --> H["Output: Updated CV (docx/pdf)"]
-```
 
 ---
 
