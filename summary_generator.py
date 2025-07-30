@@ -17,14 +17,25 @@ def generate_summary(matched, missing, jd_text, tone=None, custom_instructions=N
     prompt = f"""
 You are an assistant that writes tailored CV summaries for job applications.
 
+CRITICAL RULES - MUST FOLLOW EXACTLY:
+1. ONLY mention skills from the ALLOWED list
+2. NEVER mention skills from the FORBIDDEN list
+3. If you mention ANY forbidden skill, the summary will be rejected
+
+ALLOWED skills (the candidate HAS these): {', '.join(matched) if matched else 'testing, python'}
+FORBIDDEN skills (the candidate does NOT have these): {', '.join(missing)}
+
 Write a 1-paragraph CV summary for a candidate applying to the position of "{job_title}". 
 Write the summary in the first person (using 'I', 'my', etc.).
-Only mention as current skills and experience those found in this list: {', '.join(matched)}.
-If no skills are found in the list, always mention that the canditate has experience in the field of testing and also Python.
 Only refer to the finished studies as "engineer".
-Please refrain from using very elevated words since i want the summary to be realistic and not too good to be true while also sounding human.
-Do NOT claim the candidate has any skills or experience from this list: {', '.join(missing)}.
-Optionally, you may mention the candidate's eagerness to develop in the missing areas, but do not state or imply they already possess them.
+Keep the language professional but not overly elevated - make it sound realistic and human.
+
+EXAMPLES OF WHAT NOT TO SAY:
+- Do NOT say "I have experience with {', '.join(missing[:3]) if missing else 'forbidden technologies'}"
+- Do NOT imply knowledge of any forbidden technologies
+- Do NOT mention learning/developing forbidden skills unless explicitly requested
+
+You may mention eagerness to learn new technologies in general terms, but do not specifically name forbidden skills.
 """
     if tone and tone != "Default":
         prompt += f"\n\nUse a {tone.lower()} tone."
