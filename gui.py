@@ -62,7 +62,7 @@ class JobAppAutomatorGUI:
         tk.Button(self.root, text="Browse", command=self.browse_jd).grid(row=1, column=2)
         tk.Button(self.root, text="Paste Job Description", command=self.open_paste_jd_dialog).grid(row=1, column=3, padx=5)
         self.paste_jd_label = tk.Label(self.root, text="", fg="green")
-        self.paste_jd_label.grid(row=2, column=3, padx=5)
+        self.paste_jd_label.grid(row=3, column=3, padx=5)
 
         self.save_as_pdf_checkbox = tk.Checkbutton(self.root, text="Save as PDF (for .docx CV)", variable=self.save_as_pdf_var, state=tk.DISABLED)
         self.save_as_pdf_checkbox.grid(row=2, column=0, columnspan=3, pady=2)
