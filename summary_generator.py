@@ -21,6 +21,7 @@ CRITICAL RULES - MUST FOLLOW EXACTLY:
 1. ONLY mention skills from the ALLOWED list
 2. NEVER mention skills from the FORBIDDEN list
 3. If you mention ANY forbidden skill, the summary will be rejected
+4. DO NOT claim fluency or proficiency in languages unless explicitly verified
 
 ALLOWED skills (the candidate HAS these): {', '.join(matched) if matched else 'testing, python'}
 FORBIDDEN skills (the candidate does NOT have these): {', '.join(missing)}
@@ -34,6 +35,8 @@ EXAMPLES OF WHAT NOT TO SAY:
 - Do NOT say "I have experience with {', '.join(missing[:3]) if missing else 'forbidden technologies'}"
 - Do NOT imply knowledge of any forbidden technologies
 - Do NOT mention learning/developing forbidden skills unless explicitly requested
+- Do NOT claim fluency, proficiency, or advanced skills in languages from the FORBIDDEN list
+- Do NOT say "multilingual" or "proficient in X languages" unless explicitly verified
 
 You may mention eagerness to learn new technologies in general terms, but do not specifically name forbidden skills.
 """
